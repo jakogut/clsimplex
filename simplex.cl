@@ -52,14 +52,20 @@ void grad3( int hash, float *gx, float *gy, float *gz ) {
     return;
 }
 
+/* This kernel takes one three dimensional vector for the origin
+ * of the noise block, as well as three integers to specify the
+ * dimensions of the block to generate, and finally a pointer to
+ * global memory to which to write the results. */
 __kernel void
 sdnoise3(const float x, const float y, const float z,
         const unsigned cs_x, const unsigned cs_y, const unsigned cs_z,
         __global float *chunk) {
 
+    // The global id is used to write the results to a flat array
     unsigned idx = get_global_id(0);
 
     if (idx > 0 && idx < cs_x * cs_y * cs_z){
+        // Find the x, y, and z coordinates from the index and block dims
         float zo = floor((float)idx / (cs_z*cs_z));
         float yo = floor((float)(idx - (zo*cs_z*cs_z)) / cs_y);
         float xo = floor((float)idx - (yo*cs_y + zo*cs_z*cs_z));
