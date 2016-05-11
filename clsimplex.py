@@ -4,34 +4,42 @@ import sys
 import datetime
 
 class NoiseGenerator(object):
-    def __init__(self, block_dim=None):
+    def __init__(self, seed=None):
         self.ctx = cl.create_some_context()
         self.queue = cl.CommandQueue(self.ctx)
+        self.seed = seed
 
-        if block_dim: self.block_dim = block_dim
-        else: self.block_dim = 256, 256, 256
+        numpy.random.seed(seed)
+        self._compute_seed()
 
-    def load_program(self, filename):
+    def _compute_seed(self):
+        self.perm = numpy.array([i for i in range(256)], dtype=numpy.uint8)
+
+        numpy.random.shuffle(self.perm)
+        self.perm = numpy.concatenate([self.perm, self.perm])
+
+    def _load_program(self, filename):
         with open(filename, 'r') as f:
             fstr = "".join(f.readlines())
         self.program = cl.Program(self.ctx, fstr).build()
 
-    def noise3d(self, xoff=0, yoff=0, zoff=0):
-        self.load_program('simplex.cl')
+    def noise3d(self, offset=(0,0,0), block_dim=(256,256,256)):
+        self._load_program('simplex.cl')
 
-        chunk_size = self.block_dim[0] * self.block_dim[1] * self.block_dim[2]
+        chunk_size = block_dim[0] * block_dim[1] * block_dim[2]
         global_ws = (chunk_size,)
         local_ws = None
 
         mf = cl.mem_flags
         res = numpy.empty(shape=global_ws, dtype=numpy.float32)
         res_d = cl.Buffer(self.ctx, mf.WRITE_ONLY, numpy.float32(1).nbytes*chunk_size)
+        perm_d = cl.Buffer(self.ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=self.perm)
 
         event = self.program.sdnoise3(
             self.queue, global_ws, local_ws,
-            numpy.float32(xoff), numpy.float32(yoff), numpy.float32(zoff),
-            numpy.uint32(self.block_dim[0]), numpy.uint32(self.block_dim[1]), numpy.uint32(self.block_dim[2]),
-            res_d
+            numpy.float32(offset[0]), numpy.float32(offset[1]), numpy.float32(offset[2]),
+            numpy.uint32(block_dim[0]), numpy.uint32(block_dim[1]), numpy.uint32(block_dim[2]),
+            res_d, perm_d
         )
 
         cl.enqueue_read_buffer(self.queue, res_d, res).wait()

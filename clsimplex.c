@@ -33,11 +33,30 @@ void print_chunk(float *chunk, unsigned xs, unsigned ys, unsigned zs) {
     printf("\n\n");
 }
 
+void shuffle_uint8(uint8_t *array, size_t n)
+{
+    size_t i;
+    for (i = n - 1; i > 0; i--) {
+        size_t j = rand() % (i+1);
+        uint8_t t = array[j];
+        array[j] = array[i];
+        array[i] = t;
+    }
+}
+
+unsigned char *compute_seed()
+{
+    unsigned char *perm = calloc(512, sizeof(unsigned char));
+    for (int i = 0; i < 256; i++) perm[i] = i;
+    shuffle_uint8(perm, 256);
+    for(int i = 0; i < 256; i++) perm[i + 256] = perm[i];
+
+    return perm;
+}
+
 int main(void)
 {
 	struct cl_state cl;
-
-	srand(time(NULL));
 
 	populate_platforms(&cl);
 	populate_devices(&cl);
@@ -54,6 +73,14 @@ int main(void)
 					  CHUNK_SIZE * sizeof(float),
 					  NULL, &cl.error);
 	}
+
+	srand(time(NULL));
+    unsigned char *perm = compute_seed();
+
+    cl_mem perm_d = clCreateBuffer(cl.context,
+                    CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR,
+                    sizeof(uint8_t)*512,
+                    perm, &cl.error);
 
 	if (cl.error != CL_SUCCESS)
 		printf("Failed to create device buffers with %s\n",
@@ -77,6 +104,8 @@ int main(void)
 					   sizeof(unsigned), &zs);
 		cl.error |= clSetKernelArg(cl.kernels[i], 6,
 					   sizeof(cl_mem), &res_d[i]);
+        cl.error |= clSetKernelArg(cl.kernels[i], 7,
+                       sizeof(cl_mem), &perm_d);
 
 		if (cl.error != CL_SUCCESS)
 			printf("Error while settings kernel args: %s\n",
@@ -141,7 +170,7 @@ int main(void)
         printf("Elapsed time: %f\n\n", sec_elapsed_gpu);
 	}
 
-    print_chunk(device_result, XS, YS, ZS);
+    print_chunk(device_result, 32, 32, 32);
 
 	free(res_d);
 	free(device_result);
