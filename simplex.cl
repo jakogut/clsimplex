@@ -24,10 +24,10 @@ void grad3( int hash, float *gx, float *gy, float *gz ) {
     return;
 }
 
-/* This kernel takes one three dimensional vector for the origin
- * of the noise block, as well as three integers to specify the
- * dimensions of the block to generate, and finally a pointer to
- * global memory to which to write the results. */
+/* (x, y, z) origin of the noise block
+ * (cs_x, cs_y, cs_z) dimensions of the block to generate
+ * (*chunk) global memory pointer result is written to
+ * (*perm) permutation table, used for seeding */
 __kernel void
 sdnoise3(const float x, const float y, const float z,
         const unsigned cs_x, const unsigned cs_y, const unsigned cs_z,
