@@ -51,7 +51,11 @@ def print_chunk(chunk, xdim, ydim, zdim):
 
 if __name__ == '__main__':
     gen = NoiseGenerator()
+
+    start = datetime.datetime.now()
     noise = gen.noise3d()
+    elapsed = datetime.datetime.now() - start
 
     print_chunk(noise, 32, 32, 32)
+    print("\nElapsed time: {} seconds".format(elapsed.total_seconds()))
 
