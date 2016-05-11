@@ -17,14 +17,14 @@
 
 void print_chunk(float *chunk, unsigned xs, unsigned ys, unsigned zs) {
     for (unsigned z = 0; z < zs; z++) {
-        printf("\n\n");
+        //printf("\n\n");
 
         for (unsigned x = 0; x < xs; x++) {
             printf("\n");
 
             for (unsigned y = 0; y < ys; y++) {
                 float val = chunk[x + (y*ys) + (z*zs*zs)];
-                if (val < 0) printf(" . ");
+                if (val > 0) printf(" . ");
                 else printf(" # ");
             }
         }

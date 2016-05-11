@@ -39,15 +39,15 @@ class NoiseGenerator(object):
 
 def print_chunk(chunk, xdim, ydim, zdim):
     for z in range(zdim):
-        sys.stdout.write('\n\n')
+        #sys.stdout.write('\n\n')
 
         for x in range(xdim):
             sys.stdout.write('\n')
 
             for y in range(ydim):
                 val = chunk[x + y*ydim + z*(zdim**2)]
-                if val > 0: sys.stdout.write(' # ')
-                else: sys.stdout.write(' . ')
+                if val > 0: sys.stdout.write(' . ')
+                else: sys.stdout.write(' # ')
 
 if __name__ == '__main__':
     gen = NoiseGenerator()
