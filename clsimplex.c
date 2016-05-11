@@ -9,9 +9,9 @@
 #include <CL/cl.h>
 #include "cl_common.h"
 
-#define XS 32
-#define YS 32
-#define ZS 32
+#define XS 256
+#define YS 256
+#define ZS 256
 
 #define CHUNK_SIZE XS * YS * ZS
 
